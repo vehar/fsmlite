@@ -1,4 +1,3 @@
-#include <iostream>
 #include <stdexcept>
 #include <type_traits>
 
@@ -9,15 +8,11 @@ class state_machine: public fsmlite::fsm<state_machine> {
 public:
     enum states { Init, Exit };
 
+    struct event {};
+
 private:
-    void process(const int& event) {
-        std::cout << "Processing event: " << event << "\n";
-#ifdef NDEBUG
-        if (event != 0) {
-            throw std::logic_error("recursive invocation detected");
-        }
-#endif
-        process_event(event + 1);
+    void process(const event& e) {
+        process_event(e);
     }
 
 private:
@@ -26,7 +21,7 @@ private:
     using transition_table = table<
 //              Start Event  Target Action
 //  -----------+-----+------+------+-----------+-
-    mem_fn_row< Init, int,   Exit,  &m::process >
+    mem_fn_row< Init, event, Exit,  &m::process >
 //  -----------+-----+------+------+-----------+-
     >;
 };
@@ -35,9 +30,8 @@ int main()
 {
     state_machine m;
     try {
-        m.process_event(0);
+        m.process_event(state_machine::event{});
     } catch (std::logic_error& e) {
-        std::cerr << e.what() << "\n";
         return 0;
     }
     return 1;  /* LCOV_EXCL_LINE */

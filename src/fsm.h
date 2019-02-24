@@ -28,7 +28,7 @@
 #include <cstddef>
 #include <type_traits>
 
-#if !defined(NDEBUG) && (!__GNUC__ || __EXCEPTIONS)
+#if !__GNUC__ || __EXCEPTIONS
 #include <stdexcept>
 #endif
 
@@ -62,6 +62,26 @@ namespace fsmlite {
 #else
 #error "fsmlite requires C++11 support."
 #endif
+        // C++11 std::lock_guard is in <thread>, which may not be
+        // present on freestanding implementations
+        template<class BasicLockable>
+        class lock_guard {
+            BasicLockable& ref;
+
+        public:
+            explicit lock_guard(BasicLockable& m) : ref(m) {
+                m.lock();
+            }
+
+            ~lock_guard() {
+                ref.unlock();
+            }
+
+        private:
+            lock_guard( const lock_guard& ) = delete;
+            lock_guard& operator=(const lock_guard&) = delete;
+        };
+
         // C++11 std::forward() is in <utility>, which may not be
         // present on freestanding implementations
         template<class T>
@@ -174,15 +194,49 @@ namespace fsmlite {
         };
     }
 
+#if !__GNUC__ || __EXCEPTIONS
+    class logic_lock {
+        bool locked = false;
+
+    public:
+        void lock() {
+            if (locked) {
+                throw std::logic_error("process_event called recursively");
+            }
+            locked = true;
+        }
+
+        void unlock() {
+            locked = false;
+        }
+    };
+#endif
+
+    struct no_lock {
+        void lock() {}
+        void unlock() {}
+    };
+
+#if !__GNUC__ || __EXCEPTIONS
+    using default_lock = logic_lock;
+#else
+    using default_lock = no_lock;
+#endif
+
     /**
      * Finite state machine (FSM) base class template.
      *
      * @tparam Derived the derived state machine class
      *
      * @tparam State the FSM's state type, defaults to `int`
+     *
+     * @tparam Lock the FSM's lock type, defaults to `default_lock`
      */
-    template<class Derived, class State = int>
+    template<class Derived, class State = int, class Lock = default_lock>
     class fsm {
+        State state;
+        Lock lock;
+
     public:
         /**
          * The FSM's state type.
@@ -195,7 +249,7 @@ namespace fsmlite {
          *
          * @param init_state the FSM's initial state
          */
-        fsm(state_type init_state = state_type()) : m_state(init_state) {}
+        fsm(state_type init_state = state_type()) : state(init_state) {}
 
         /**
          * Process an event.
@@ -213,16 +267,16 @@ namespace fsmlite {
         template<class Event>
         void process_event(const Event& event) {
             using rows = typename by_event_type<Event, typename Derived::transition_table>::type;
-            processing_lock lock(*this);
             static_assert(std::is_base_of<fsm, Derived>::value, "must derive from fsm");
             Derived& self = static_cast<Derived&>(*this);
-            m_state = handle_event<Event, rows>::execute(self, event, m_state);
+            detail::lock_guard<Lock> g(lock);
+            state = handle_event<Event, rows>::execute(self, event, state);
         }
 
         /**
          * Return the state machine's current state.
          */
-        state_type current_state() const { return m_state; }
+        state_type current_state() const { return state; }
 
     protected:
         /**
@@ -240,7 +294,7 @@ namespace fsmlite {
          */
         template<class Event>
         state_type no_transition(const Event& event) {
-            return m_state;
+            return state;
         }
 
     private:
@@ -417,32 +471,6 @@ namespace fsmlite {
                 return self.no_transition(event);
             }
         };
-
-    private:
-        state_type m_state;
-
-    private:
-#if !defined(NDEBUG) && (!__GNUC__ || __EXCEPTIONS)
-        class processing_lock {
-        public:
-            processing_lock(fsm& m) : processing(m.processing) {
-                if (processing) {
-                    throw std::logic_error("process_event called recursively");
-                }
-                processing = true;
-            }
-            ~processing_lock() {
-                processing = false;
-            }
-        private:
-            bool& processing;
-        };
-        bool processing = false;
-#else
-        struct processing_lock {
-            processing_lock(fsm&) {}
-        };
-#endif
     };
 }
 
