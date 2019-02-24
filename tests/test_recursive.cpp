@@ -31,7 +31,7 @@ int main()
     state_machine m;
     try {
         m.process_event(state_machine::event{});
-    } catch (std::logic_error& e) {
+    } catch (fsmlite::processing_error& e) {
         return 0;
     }
     return 1;  /* LCOV_EXCL_LINE */

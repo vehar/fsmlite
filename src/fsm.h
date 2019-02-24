@@ -195,13 +195,18 @@ namespace fsmlite {
     }
 
 #if !__GNUC__ || __EXCEPTIONS
-    class logic_lock {
+    class processing_error : public std::logic_error {
+    public:
+        processing_error() : logic_error("fsmlite::fsm::process_event() called recursively") {}
+    };
+
+    class processing_lock {
         bool locked = false;
 
     public:
         void lock() {
             if (locked) {
-                throw std::logic_error("process_event called recursively");
+                throw processing_error();
             }
             locked = true;
         }
@@ -218,7 +223,7 @@ namespace fsmlite {
     };
 
 #if !__GNUC__ || __EXCEPTIONS
-    using default_lock = logic_lock;
+    using default_lock = processing_lock;
 #else
     using default_lock = no_lock;
 #endif
