@@ -282,78 +282,6 @@ namespace fsmlite {
          */
         template<class... Rows> using table = detail::list<Rows...>;
 
-        /**
-         * Basic transition class template.
-         *
-         * @tparam start the start state of the transition
-         *
-         * @tparam Event the event type triggering the transition
-         *
-         * @tparam target the target state of the transition
-         *
-         * @tparam Action an action function type, or `std::nullptr_t`
-         *
-         * @tparam action a static `Action` instance
-         *
-         * @tparam Guard a guard function type, or `std::nullptr_t`
-         *
-         * @tparam guard a static `Guard` instance
-         */
-        template<
-            State start,
-            class Event,
-            State target,
-            class Action = std::nullptr_t,
-            Action action = nullptr,
-            class Guard = std::nullptr_t,
-            Guard guard = nullptr
-        >
-        struct basic_row : public row_base<start, Event, target> {
-            static void process_event(Derived& self, const Event& event) {
-                row_base<start, Event, target>::process_event(action, self, event);
-            }
-
-            static bool check_guard(const Derived& self, const Event& event) {
-                return row_base<start, Event, target>::check_guard(guard, self, event);
-            }
-        };
-
-        /**
-         * Member function transition class template.
-         *
-         * @tparam start the start state of the transition
-         *
-         * @tparam Event the event type triggering the transition
-         *
-         * @tparam target the target state of the transition
-         *
-         * @tparam action an action member function, or `nullptr`
-         *
-         * @tparam guard a guard member function, or `nullptr`
-         */
-        template<
-            State start,
-            class Event,
-            State target,
-            void (Derived::*action)(const Event&) = nullptr,
-            bool (Derived::*guard)(const Event&) const = nullptr
-        >
-        struct mem_fn_row : public row_base<start, Event, target> {
-            static void process_event(Derived& self, const Event& event) {
-                if (action != nullptr) {
-                    row_base<start, Event, target>::process_event(action, self, event);
-                }
-            }
-
-            static bool check_guard(const Derived& self, const Event& event) {
-                if (guard != nullptr) {
-                    return row_base<start, Event, target>::check_guard(guard, self, event);
-                } else {
-                    return true;
-                }
-            }
-        };
-
 #if __cplusplus >= 201703L
         /**
          * Generic transition class template (requires C++17).
@@ -382,6 +310,42 @@ namespace fsmlite {
 
             static bool check_guard(const Derived& self, const Event& event) {
                 return row_base<start, Event, target>::check_guard(guard, self, event);
+            }
+        };
+#else
+        /**
+         * Member function transition class template (C++11 and C++14).
+         *
+         * @tparam start the start state of the transition
+         *
+         * @tparam Event the event type triggering the transition
+         *
+         * @tparam target the target state of the transition
+         *
+         * @tparam action an action member function, or `nullptr`
+         *
+         * @tparam guard a guard member function, or `nullptr`
+         */
+        template<
+            State start,
+            class Event,
+            State target,
+            void (Derived::*action)(const Event&) = nullptr,
+            bool (Derived::*guard)(const Event&) const = nullptr
+        >
+        struct row : public row_base<start, Event, target> {
+            static void process_event(Derived& self, const Event& event) {
+                if (action != nullptr) {
+                    row_base<start, Event, target>::process_event(action, self, event);
+                }
+            }
+
+            static bool check_guard(const Derived& self, const Event& event) {
+                if (guard != nullptr) {
+                    return row_base<start, Event, target>::check_guard(guard, self, event);
+                } else {
+                    return true;
+                }
             }
         };
 #endif

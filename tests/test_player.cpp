@@ -161,22 +161,22 @@ private:
     using m = player;  // for brevity
 
     using transition_table = table<
-//              Start    Event        Target   Action              Guard (optional)
-//  -----------+--------+------------+--------+-------------------+---------------+-
-    mem_fn_row< Stopped, play,        Playing, &m::start_playback                  >,
-    mem_fn_row< Stopped, open_close,  Open,    &m::open_drawer                     >,
-    mem_fn_row< Open,    open_close,  Empty,   &m::close_drawer                    >,
-    mem_fn_row< Empty,   open_close,  Open,    &m::open_drawer                     >,
-    mem_fn_row< Empty,   cd_detected, Open,    &m::open_drawer,    &m::is_bad_cd   >,
-    mem_fn_row< Empty,   cd_detected, Playing, &m::start_autoplay, &m::is_autoplay >,
-    mem_fn_row< Empty,   cd_detected, Stopped, &m::store_cd_info   /* fallback */  >,
-    mem_fn_row< Playing, stop,        Stopped, &m::stop_playback                   >,
-    mem_fn_row< Playing, pause,       Paused,  &m::pause_playback                  >,
-    mem_fn_row< Playing, open_close,  Open,    &m::stop_and_open                   >,
-    mem_fn_row< Paused,  play,        Playing, &m::resume_playback                 >,
-    mem_fn_row< Paused,  stop,        Stopped, &m::stop_playback                   >,
-    mem_fn_row< Paused,  open_close,  Open,    &m::stop_and_open                   >
-//  -----------+--------+------------+--------+-------------------+---------------+-
+//       Start    Event        Target   Action              Guard (optional)
+//  ----+--------+------------+--------+-------------------+---------------+-
+    row< Stopped, play,        Playing, &m::start_playback                  >,
+    row< Stopped, open_close,  Open,    &m::open_drawer                     >,
+    row< Open,    open_close,  Empty,   &m::close_drawer                    >,
+    row< Empty,   open_close,  Open,    &m::open_drawer                     >,
+    row< Empty,   cd_detected, Open,    &m::open_drawer,    &m::is_bad_cd   >,
+    row< Empty,   cd_detected, Playing, &m::start_autoplay, &m::is_autoplay >,
+    row< Empty,   cd_detected, Stopped, &m::store_cd_info   /* fallback */  >,
+    row< Playing, stop,        Stopped, &m::stop_playback                   >,
+    row< Playing, pause,       Paused,  &m::pause_playback                  >,
+    row< Playing, open_close,  Open,    &m::stop_and_open                   >,
+    row< Paused,  play,        Playing, &m::resume_playback                 >,
+    row< Paused,  stop,        Stopped, &m::stop_playback                   >,
+    row< Paused,  open_close,  Open,    &m::stop_and_open                   >
+//  ----+--------+------------+--------+-------------------+---------------+-
     >;
 };
 
