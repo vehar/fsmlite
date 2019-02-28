@@ -5,7 +5,7 @@ It is based on concepts first presented by David Abrahams and Aleksey
 Gurtovoy in [C++ Template Metaprogramming][1], with additional ideas
 taken liberally from Boost's [Meta State Machine][2] (MSM).
 
-The canonical CD player example (with CD-Text and auto-play support!)
+The canonical CD player example (with CD-Text and auto-play support)
 therefore looks somewhat like this:
 
 ```C++
