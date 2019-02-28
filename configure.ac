@@ -20,6 +20,7 @@ AC_CANONICAL_HOST
 
 AX_CXXFLAGS_WARN_ALL
 AX_CXX_COMPILE_STDCXX_11
+AX_CXX_COMPILE_STDCXX([17], [], [optional])
 
 AC_ARG_ENABLE([coverage],
         [AS_HELP_STRING([--enable-coverage], [enable code coverage])],
